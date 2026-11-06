@@ -344,9 +344,11 @@ function drain(signal: string): void {
   draining = true;
   const started = Date.now();
   console.log(`[hunch] ${signal}: draining (${liveMatches()} live matches)`);
-  for (const ws of wss.clients) {
-    if (ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify({ t: 'error', message: 'HUNCH is updating. Finish your match; new matches pause for a minute.' } satisfies ServerMessage));
+  // Only players mid-match need to know; everyone else just reconnects quietly.
+  for (const s of sessions.values()) {
+    const room = s.roomCode ? rooms.get(s.roomCode) : undefined;
+    if (s.ws && s.ws.readyState === s.ws.OPEN && room?.match && room.match.phase !== 'complete') {
+      s.ws.send(JSON.stringify({ t: 'error', message: 'Server restart after this match. Finish it out; new matches pause briefly.' } satisfies ServerMessage));
     }
   }
   const check = setInterval(() => {

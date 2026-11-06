@@ -134,11 +134,20 @@ class Net {
 
   private onMessage(msg: ServerMessage): void {
     switch (msg.t) {
-      case 'welcome':
+      case 'welcome': {
         store(TOKEN_KEY, msg.token);
-        this.set({ connected: true, playerId: msg.playerId, error: null });
+        // We were in a room, reconnected, and the server no longer has it:
+        // it restarted. Say so rather than silently dropping to the home screen.
+        const lost = this.state.pub !== null && msg.playerId === null;
+        this.set({
+          connected: true,
+          playerId: msg.playerId,
+          ...(lost ? { pub: null, me: null } : {}),
+          error: lost ? 'The server restarted and your room was closed. Start a new one or rejoin with a fresh code.' : null,
+        });
         for (const q of this.queue.splice(0)) this.sendRaw(q);
         break;
+      }
       case 'state':
         if (this.bestRtt === Infinity) this.offset = msg.serverNow - Date.now();
         this.set({ pub: msg.pub, me: msg.me, error: null });
@@ -181,7 +190,14 @@ class Net {
     return Date.now() + this.offset;
   }
 
+  private errorTimer: ReturnType<typeof setTimeout> | null = null;
+
   private set(patch: Partial<NetState>): void {
+    if (patch.error) {
+      // Messages clear themselves; nothing should sit on screen forever.
+      if (this.errorTimer) clearTimeout(this.errorTimer);
+      this.errorTimer = setTimeout(() => this.set({ error: null }), 7000);
+    }
     this.state = { ...this.state, ...patch };
     for (const s of this.subs) s();
   }
