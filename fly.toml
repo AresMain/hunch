@@ -1,0 +1,47 @@
+# Fly.io config for HUNCH. `fly launch --copy-config --no-deploy` once, then `fly deploy`.
+#
+# IMPORTANT: rooms live in memory on one machine. Keep exactly ONE machine
+# (`fly scale count 1`) until room state moves to Redis; with two machines,
+# players in the same room could land on different servers.
+
+app = "hunch-game"          # must be globally unique: change if taken
+primary_region = "bom"      # Mumbai; pick the region closest to your players (`fly platform regions`)
+
+kill_signal = "SIGTERM"
+kill_timeout = 300          # seconds: lets live matches finish before a deploy stops the machine
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  DRAIN_MAX_MS = "240000"
+  # ALLOWED_ORIGINS = "https://hunch.example.com,https://www.hunch.example.com"
+
+[deploy]
+  # Start the new version, wait for health checks, then stop (and drain) the old one.
+  strategy = "bluegreen"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"   # an idle stop would end every room
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 2000
+    hard_limit = 2500
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "15s"
+    timeout = "5s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

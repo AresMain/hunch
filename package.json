@@ -1,0 +1,42 @@
+{
+  "name": "hunch",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "HUNCH: real-time multiplayer word-decoding game",
+  "scripts": {
+    "dev": "concurrently -k -n server,client -c cyan,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "PORT=8787 tsx watch src/server/index.ts",
+    "dev:client": "vite",
+    "build": "vite build && npm run build:server",
+    "start": "NODE_ENV=production node dist-server/index.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build:puzzles": "tsx scripts/build-puzzles.ts",
+    "build:server": "esbuild src/server/index.ts --bundle --platform=node --target=node22 --format=esm --packages=external --outfile=dist-server/index.mjs && mkdir -p dist-server/data && cp src/server/data/puzzles.generated.json dist-server/data/"
+  },
+  "dependencies": {
+    "wordlist-english": "^1.2.1",
+    "ws": "^8.22.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@types/ws": "8.5.13",
+    "@vitejs/plugin-react": "4.3.4",
+    "concurrently": "9.1.0",
+    "esbuild": "0.23.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vite": "6.0.3",
+    "vitest": "2.1.8",
+    "wordnet-db": "^3.1.14"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
