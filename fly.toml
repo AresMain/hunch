@@ -5,7 +5,7 @@
 # players in the same room could land on different servers.
 
 app = "hunch-game"          # must be globally unique: change if taken
-primary_region = "bom"      # Mumbai; pick the region closest to your players (`fly platform regions`)
+primary_region = "sin"      # Singapore: closest Fly region to India (`fly platform regions` lists all)
 
 kill_signal = "SIGTERM"
 kill_timeout = 300          # seconds: lets live matches finish before a deploy stops the machine
